@@ -1,0 +1,17 @@
+name = Easyprofile to Artesis Migration
+description = Implements D7->D7 migration from Easyprofile to Artesis.
+core = 7.x
+version = 7.x-1.0
+package = Alpha
+dependencies[] = migrate
+dependencies[] = migrate_ui
+dependencies[] = migrate_d2d
+dependencies[] = date_migrate
+
+files[] = includes/UserMigration.inc
+files[] = includes/BaseNodeMigration.inc
+files[] = includes/EventMigration.inc
+;files[] = includes/PageMigration.inc
+;files[] = includes/NewsMigration.inc
+;files[] = includes/EventMigration.inc
+;files[] = includes/LibraryMigration.inc

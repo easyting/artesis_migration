@@ -1,0 +1,129 @@
+<?php
+/**
+ * @file
+ */
+
+/**
+ * IMPORTANT: File source and DB name (as written in settings.php) are HARDCODED
+ * for the sake of simplicity. When migrating one has to:
+ * 1. set legacy DB name (connection name as defined in settings.php $database definition) to AM_SOURCE_DB.
+ * 2. create a symlink to legacy files called DRUPAL_ROOT . '/' . AM_FILES
+ */
+define('AM_SOURCE_DB', 'easyprofile');
+define('AM_FILES', 'easyprofile_files');
+
+/**
+ * Implements hook_migrate_api().
+ */
+function artesis_migration_migrate_api() {
+  return array('api' => 2);
+}
+
+/**
+ * Implementation of hook_flush_caches().
+ */
+function artesis_migration_flush_caches() {
+  artesis_migration_register_migrations();
+}
+
+/**
+ * Register all of the migrations.
+ */
+function artesis_migration_register_migrations() {
+  $common_arguments = array(
+    'source_connection' => AM_SOURCE_DB,
+    'source_version' => 7,
+  );
+
+  // The description and the migration machine name are also required arguments,
+  // which will be unique for each migration you register.
+  $arguments = $common_arguments + array(
+    'description' => t('Migration of users'),
+    'machine_name' => 'User',
+  );
+  // We just use the migrate_d2d D7 migration class as-is.
+  Migration::registerMigration('DrupalUser7Migration', $arguments['machine_name'],
+                               $arguments);
+
+  // Again, we're using the migrate_d2d class directly.
+  // The soft dependency says that while we don't have to run the user migration
+  // first, we want to make sure it's listed first so the vocabularies are
+  // listed right ahead of the node migrations.
+  $common_vocabulary_arguments = $common_arguments + array(
+    'soft_dependencies' => array('User'),
+    'default_rollback_action' => MigrateMap::ROLLBACK_PRESERVE
+  );
+
+  $vocabulary_arguments = array(
+    'description' => t('Migration of Category terms'),
+    'machine_name' => 'Category',
+    'source_vocabulary' => 'category',
+    'destination_vocabulary' => 'category',
+  );
+  $arguments = $common_vocabulary_arguments + $vocabulary_arguments;
+  Migration::registerMigration('DrupalTerm7Migration', $arguments['machine_name'],
+                               $arguments);
+
+  $vocabulary_arguments = array(
+    'description' => t('Migration of Tags terms'),
+    'machine_name' => 'Tags',
+    'source_vocabulary' => 'ding_content_tags',
+    'destination_vocabulary' => 'ding_content_tags',
+  );
+  $arguments = $common_vocabulary_arguments + $vocabulary_arguments;
+  Migration::registerMigration('DrupalTerm7Migration', $arguments['machine_name'],
+                               $arguments);
+
+  // File migration
+  $arguments = $common_arguments + array(
+    'class_name' => 'DrupalFile7Migration',
+    'machine_name' => 'Files',
+    'description' => t('Migration of files'),
+     // @todo: file path may vary, need to clarify that before final deployment.
+    'source_dir'  => DRUPAL_ROOT . '/' . AM_FILES,
+    'user_migration' => 'User',
+    'default_uid' => 1,
+  );
+  Migration::registerMigration($arguments['class_name'], $arguments['machine_name'], $arguments);
+
+  // Node migrations - each has its own class derived from the migrate_d2d class,
+  // specifying its particular field mappings and transformations. source_type
+  // and destination_type are required arguments.
+  $node_arguments = array(
+    array(
+      'class_name' => 'BaseNodeMigration',
+      'description' => t('Migration of page nodes'),
+      'machine_name' => 'Page',
+      'source_type' => 'ding_page',
+      'destination_type' => 'ding_page',
+      'dependencies' => array('Files'),
+    ),
+    array(
+      'class_name' => 'BaseNodeMigration',
+      'description' => t('Migration of news nodes'),
+      'machine_name' => 'News',
+      'source_type' => 'ding_news',
+      'destination_type' => 'ding_news',
+      'dependencies' => array('Files'),
+    ),
+    array(
+      'class_name' => 'EventMigration',
+      'description' => t('Migration of event nodes'),
+      'machine_name' => 'Event',
+      'source_type' => 'ding_event',
+      'destination_type' => 'ding_event',
+      'dependencies' => array('Files'),
+    ),
+  );
+
+  // Tell the node migrations where the users are coming from, so they can
+  // set up the dependency and resolve D7->D7 uids.
+  $common_node_arguments = $common_arguments + array(
+    'user_migration' => 'User',
+  );
+  foreach ($node_arguments as $arguments) {
+    $arguments = array_merge_recursive($arguments, $common_node_arguments);
+    Migration::registerMigration($arguments['class_name'], $arguments['machine_name'],
+                                 $arguments);
+  }
+}
