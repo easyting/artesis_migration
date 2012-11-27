@@ -45,6 +45,19 @@ class CampaignMigration extends DrupalNode7Migration {
       return '';
     };
     $row->field_camp_link = preg_replace_callback('/node\/(\d+)/', $repcallback, $row->field_camp_link);
+
+    // Process media tags.
+    $file_map =
+      db_select('migrate_map_files', 'mmf')
+        ->fields('mmf', array('sourceid1', 'destid1'))
+        ->execute()
+        ->fetchAllKeyed();
+
+    $repcallback2 = function($matches) use ($file_map) {
+      return '"fid":' . $file_map[$matches[1]];
+    };
+    $row->field_camp_text_full[0] = preg_replace_callback('/"fid":"(\d+)"/', $repcallback2, $row->field_camp_text_full[0]);
+
     return TRUE;
   }
 
