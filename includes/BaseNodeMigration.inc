@@ -17,10 +17,10 @@ class BaseNodeMigration extends DrupalNode7Migration {
     $this->removeFieldMapping('body:format');
 
     $this->addSimpleMappings(array(
-      'field_ding_body' => 'field_ding_body',
-      'field_ding_body:format' => 'field_ding_body:format',
-      'field_ding_body:language' => 'field_ding_body:language',
-      'field_ding_body:summary' => 'field_ding_body:summary',
+      'field_ding_body',
+      'field_ding_body:format',
+      'field_ding_body:language',
+      'field_ding_body:summary',
     ));
 
     $this->addFieldMapping('ding_content_tags', 'ding_content_tags')

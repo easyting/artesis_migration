@@ -12,7 +12,7 @@ class EventMigration extends BaseNodeMigration {
 
     // Date field.
     $this->addSimpleMappings(array(
-      'field_event_date' => 'field_event_date'
+      'field_event_date'
     ));
 
     $this->addUnmigratedDestinations(array(

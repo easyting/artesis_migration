@@ -51,7 +51,6 @@ function artesis_migration_register_migrations() {
   // listed right ahead of the node migrations.
   $common_vocabulary_arguments = $common_arguments + array(
     'soft_dependencies' => array('User'),
-    'default_rollback_action' => MigrateMap::ROLLBACK_PRESERVE
   );
 
   $vocabulary_arguments = array(
@@ -96,7 +95,7 @@ function artesis_migration_register_migrations() {
       'machine_name' => 'Page',
       'source_type' => 'ding_page',
       'destination_type' => 'ding_page',
-      'dependencies' => array('Files'),
+      'dependencies' => array('Tags', 'Category', 'Files'),
     ),
     array(
       'class_name' => 'BaseNodeMigration',
@@ -104,7 +103,7 @@ function artesis_migration_register_migrations() {
       'machine_name' => 'News',
       'source_type' => 'ding_news',
       'destination_type' => 'ding_news',
-      'dependencies' => array('Files'),
+      'dependencies' => array('Tags', 'Category', 'Files'),
     ),
     array(
       'class_name' => 'EventMigration',
@@ -112,7 +111,15 @@ function artesis_migration_register_migrations() {
       'machine_name' => 'Event',
       'source_type' => 'ding_event',
       'destination_type' => 'ding_event',
-      'dependencies' => array('Files'),
+      'dependencies' => array('Tags', 'Category', 'Files'),
+    ),
+    array(
+      'class_name' => 'CampaignMigration',
+      'description' => t('Migration of campaigns'),
+      'machine_name' => 'Campaign',
+      'source_type' => 'ding_campaign',
+      'destination_type' => 'ding_campaign',
+      'dependencies' => array('Tags', 'Category', 'Files', 'Page', 'News', 'Event'),
     ),
   );
 
