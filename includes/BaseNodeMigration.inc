@@ -7,6 +7,8 @@
  * Class to handle basic node migration.
  */
 class BaseNodeMigration extends DrupalNode7Migration {
+  private $updateDashboard = FALSE;
+
   public function __construct(array $arguments) {
     parent::__construct($arguments);
 
@@ -47,6 +49,11 @@ class BaseNodeMigration extends DrupalNode7Migration {
       'field_ding_material',
       'group_audience',
     ));
+
+    if (module_exists('ding_editorial_dashboard')) {
+      module_load_include('install', 'ding_editorial_dashboard');
+      $this->updateDashboard = TRUE;
+    }
   }
 
   /**
@@ -68,5 +75,17 @@ class BaseNodeMigration extends DrupalNode7Migration {
     $row->field_ding_body[0] = preg_replace_callback('/"fid":"(\d+)"/', $repcallback, $row->field_ding_body[0]);
 
     return TRUE;
+  }
+
+  /**
+   * Ensure newly created nodes have proper settings in Dashboard.
+   */
+  public function complete($entity) {
+    if ($this->updateDashboard && in_array($entity->type, array('ding_news', 'ding_event'))) {
+      $db_node = new DashboardNode($entity->nid);
+      $db_node->editorial_status = DASHBOARD_NODE_APPROVED;
+      $db_node->save();
+      $db_node->approve();
+    }
   }
 }
