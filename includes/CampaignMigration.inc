@@ -84,7 +84,9 @@ class CampaignMigration extends DrupalNode7Migration {
   // Create campaign rules.
   public function complete($entity) {
 
+    // @todo: use drupal_static to evade unnecessary DB access.
     $node_map = $this->getNodeMap();
+    $term_map = $this->getTermMap();
 
     // Fetch rules from legacy DB.
     $db = Database::getConnection('default', $this->sourceConnection);
@@ -106,6 +108,9 @@ class CampaignMigration extends DrupalNode7Migration {
           return '';
         };
         $rule_value = preg_replace_callback('/\[nid:(\d+)\]/', $repcallback, $rule->rule);
+        if ($rule_value == $rule->rule) {
+          $rule_value = preg_replace_callback('/(\d+)/', $repcallback, $rule->rule);
+        }
       }
       // Path rule.
       elseif ($rule->type == 'rule_path') {
@@ -122,6 +127,22 @@ class CampaignMigration extends DrupalNode7Migration {
           continue;
         }
       }
+      // Taxonomy term rule.
+      // NOTE: nid field is used to store term id.
+      elseif (!empty($rule->nid) && $rule-type == 'rule_taxonomy') {
+        $nid = $term_map[$rule->nid];
+        $repcallback = function($matches) use ($term_map) {
+          if (!empty($term_map[$matches[1]])) {
+            return '[tid:' . $term_map[$matches[1]] . ']';
+          }
+          return '';
+        };
+        $rule_value = preg_replace_callback('/\[tid:(\d+)\]/', $repcallback, $rule->rule);
+        if ($rule_value == $rule->rule) {
+          $rule_value = preg_replace_callback('/(\d+)/', $repcallback, $rule->rule);
+        }
+      }
+      // Generic rule
       else {
         $nid = NULL;
         $rule_value = $rule->rule;
@@ -161,5 +182,21 @@ class CampaignMigration extends DrupalNode7Migration {
         ->fetchAllKeyed();
 
     return $node_map;
+  }
+
+  private function getTermMap() {
+    $term_map =
+      db_select('migrate_map_category', 'mm')
+        ->fields('mm', array('sourceid1', 'destid1'))
+        ->execute()
+        ->fetchAllKeyed();
+
+    $term_map +=
+      db_select('migrate_map_tags', 'mm')
+        ->fields('mm', array('sourceid1', 'destid1'))
+        ->execute()
+        ->fetchAllKeyed();
+
+    return $term_map;
   }
 }
