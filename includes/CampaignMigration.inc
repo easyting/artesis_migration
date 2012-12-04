@@ -129,7 +129,7 @@ class CampaignMigration extends DrupalNode7Migration {
       }
       // Taxonomy term rule.
       // NOTE: nid field is used to store term id.
-      elseif (!empty($rule->nid) && $rule-type == 'rule_taxonomy') {
+      elseif (!empty($rule->nid) && $rule->type == 'rule_taxonomy') {
         $nid = $term_map[$rule->nid];
         $repcallback = function($matches) use ($term_map) {
           if (!empty($term_map[$matches[1]])) {
