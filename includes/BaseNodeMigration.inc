@@ -68,9 +68,10 @@ class BaseNodeMigration extends DrupalNode7Migration {
         ->fields('mmf', array('sourceid1', 'destid1'))
         ->execute()
         ->fetchAllKeyed();
+    $no_image_fid = 1255;
 
-    $repcallback = function($matches) use ($file_map) {
-      return '"fid":' . $file_map[$matches[1]];
+    $repcallback = function($matches) use ($file_map, $no_image_fid) {
+      return '"fid":' . (isset($file_map[$matches[1]]) ? $file_map[$matches[1]] : "$no_image_fid");
     };
     $row->field_ding_body[0] = preg_replace_callback('/"fid":"(\d+)"/', $repcallback, $row->field_ding_body[0]);
 
